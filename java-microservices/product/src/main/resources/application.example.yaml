@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: product
+  datasource:
+    url: 'YOUR_URL'
+    username: YOUR_USERNAME
+    password: YOUR_PASSWORD
