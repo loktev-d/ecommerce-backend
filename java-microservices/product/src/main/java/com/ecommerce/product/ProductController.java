@@ -1,25 +1,17 @@
 package com.ecommerce.product;
 
+import com.ecommerce.product.dto.GetAllProductsResponse;
+import com.ecommerce.product.dto.GetProductByIdResponse;
 import com.ecommerce.product.dto.RegisterProductRequest;
 import com.ecommerce.product.dto.RegisterProductResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
 
-import com.ecommerce.product.dto.GetAllProductsResponse;
-import com.ecommerce.product.dto.GetProductByIdResponse;
-
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @RestController
-@RequestMapping("api/v1/products")
+@RequestMapping("/products")
 public record ProductController(ProductService productService) {
 
     @PostMapping
@@ -41,7 +33,7 @@ public record ProductController(ProductService productService) {
 
         log.info("Retrieved {} products", products.size());
 
-        return new GetAllProductsResponse(products.toArray(new ProductModel[products.size()]));
+        return new GetAllProductsResponse(products.toArray(new ProductModel[0]));
     }
 
     @GetMapping("/{productId}")
