@@ -5,8 +5,11 @@ import com.ecommerce.product.dto.GetProductByIdResponse;
 import com.ecommerce.product.dto.RegisterProductRequest;
 import com.ecommerce.product.dto.RegisterProductResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.util.UUID;
 
 @Slf4j
@@ -15,7 +18,7 @@ import java.util.UUID;
 public record ProductController(ProductService productService) {
 
     @PostMapping
-    public RegisterProductResponse registerProduct(@RequestBody RegisterProductRequest request) {
+    public RegisterProductResponse registerProduct(@Valid @RequestBody RegisterProductRequest request) {
         log.info("Registrating new product {}", request);
 
         var product = productService.registerProduct(request);
@@ -40,10 +43,13 @@ public record ProductController(ProductService productService) {
     public GetProductByIdResponse getProductById(@PathVariable UUID productId) {
         log.info("Retrieving product by id = {}", productId);
 
-        var product = (ProductModel) productService.getProductById(productId);
+        var product = productService.getProductById(productId);
+
+        if (product.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product with given Id not found");
 
         log.info("Retrieved product {} by id = {}", product, productId);
 
-        return new GetProductByIdResponse(product);
+        return new GetProductByIdResponse(product.get());
     }
 }

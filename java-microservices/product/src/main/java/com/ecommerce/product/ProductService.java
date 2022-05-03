@@ -1,10 +1,10 @@
 package com.ecommerce.product;
 
 import com.ecommerce.product.dto.RegisterProductRequest;
-
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -25,7 +25,7 @@ public record ProductService(ProductReposistory productRepository) {
         return productRepository.findAll();
     }
 
-    public ProductModel getProductById(UUID productId) {
-        return productRepository.findById(productId).orElse(null);
+    public Optional<ProductModel> getProductById(UUID productId) {
+        return productRepository.findById(productId);
     }
 }

@@ -1,16 +1,15 @@
 package com.ecommerce.product;
 
-import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 @Data
 @Builder
@@ -23,12 +22,12 @@ public class ProductModel {
     @GeneratedValue
     private UUID id;
 
-    @NotBlank
+    @NotBlank(message = "Name is required")
     private String name;
 
     private String image;
 
-    @NotBlank
+    @NotBlank(message = "Description is required")
     private String description;
 
     private float price;
