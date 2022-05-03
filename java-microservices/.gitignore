@@ -3,5 +3,4 @@ target/
 .classpath
 .factorypath
 .project
-application.yaml
 .idea/
