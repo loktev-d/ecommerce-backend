@@ -185,7 +185,7 @@ resource "aws_security_group" "http_https_ssh_private" {
   }
 }
 
-resource "aws_network_interface" "public" {
+resource "aws_network_interface" "k8s_master" {
   subnet_id       = aws_subnet.public.id
   private_ips     = [cidrhost(aws_subnet.public.cidr_block, 1)]
   security_groups = [aws_security_group.http_https_ssh_public.id]
@@ -199,10 +199,54 @@ resource "aws_instance" "k8s_master" {
 
   network_interface {
     device_index         = 0
-    network_interface_id = aws_network_interface.public.id
+    network_interface_id = aws_network_interface.k8s_master.id
   }
 
   tags = {
     Name = "k8s_master"
+  }
+}
+
+resource "aws_network_interface" "k8s_worker_1" {
+  subnet_id       = aws_subnet.private.id
+  private_ips     = [cidrhost(aws_subnet.private.cidr_block, 1)]
+  security_groups = [aws_security_group.http_https_ssh_private.id]
+}
+
+resource "aws_instance" "k8s_worker_1" {
+  ami               = data.aws_ami.ubuntu.id
+  instance_type     = var.instance_type
+  availability_zone = var.availability_zone
+  key_name          = var.key_name
+
+  network_interface {
+    device_index         = 0
+    network_interface_id = aws_network_interface.k8s_worker_1.id
+  }
+
+  tags = {
+    Name = "k8s_worker_1"
+  }
+}
+
+resource "aws_network_interface" "k8s_worker_2" {
+  subnet_id       = aws_subnet.private.id
+  private_ips     = [cidrhost(aws_subnet.private.cidr_block, 2)]
+  security_groups = [aws_security_group.http_https_ssh_private.id]
+}
+
+resource "aws_instance" "k8s_worker_2" {
+  ami               = data.aws_ami.ubuntu.id
+  instance_type     = var.instance_type
+  availability_zone = var.availability_zone
+  key_name          = var.key_name
+
+  network_interface {
+    device_index         = 0
+    network_interface_id = aws_network_interface.k8s_worker_2.id
+  }
+
+  tags = {
+    Name = "k8s_worker_2"
   }
 }
