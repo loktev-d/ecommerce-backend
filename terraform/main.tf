@@ -1,27 +1,3 @@
-variable "aws_region" {
-  default = "eu-central-1"
-}
-
-variable "availability_zone" {
-  default = "eu-central-1a"
-}
-
-variable "main_cidr_block" {
-  default = "10.0.0.0/16"
-}
-
-variable "instance_type" {
-  default = "t2.micro"
-}
-
-variable "key_name" {
-  default = "aws_kp"
-}
-
-variable "ami_name" {
-  default = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
-}
-
 data "aws_ami" "ubuntu" {
   most_recent = true
   owners      = ["099720109477"] # Canonical
@@ -249,20 +225,4 @@ resource "aws_instance" "k8s_worker_2" {
   tags = {
     Name = "k8s_worker_2"
   }
-}
-
-output "k8s_master_public_ip" {
-  value = aws_instance.k8s_master.public_ip
-}
-
-output "k8s_master_private_ip" {
-  value = aws_instance.k8s_master.private_ip
-}
-
-output "k8s_worker_1_private_ip" {
-  value = aws_instance.k8s_worker_1.private_ip
-}
-
-output "k8s_worker_2_private_ip" {
-  value = aws_instance.k8s_worker_2.private_ip
 }
