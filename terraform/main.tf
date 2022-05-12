@@ -23,6 +23,14 @@ data "aws_ami" "ubuntu" {
   }
 }
 
+resource "aws_s3_bucket" "main" {
+  bucket = "ecommerce_backend"
+
+  tags = {
+    Name = "ecommerce_backend"
+  }
+}
+
 provider "aws" {
   region = var.aws_region
 }
