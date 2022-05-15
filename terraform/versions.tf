@@ -1,14 +1,18 @@
 terraform {
   required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 4.13"
+    yandex = {
+      source  = "yandex-cloud/yandex"
+      version = "~> 0.74"
     }
   }
 
   backend "s3" {
-    bucket = "ecommerce_backend"
-    key    = "dev/terraform.tfstate"
-    region = var.aws_region
+    endpoint = "storage.yandexcloud.net"
+    bucket   = "ecommerce-backend-dev"
+    key      = "terraform.tfstate"
+    region   = "ru-central1"
+
+    skip_region_validation      = true
+    skip_credentials_validation = true
   }
 }

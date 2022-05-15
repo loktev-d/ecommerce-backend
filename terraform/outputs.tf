@@ -1,15 +1,19 @@
-output "k8s_master_public_ip" {
-  value = aws_instance.k8s_master.public_ip
+output "nat_public_ip" {
+  value = yandex_compute_instance.nat.network_interface.0.nat_ip_address
 }
 
-output "k8s_master_private_ip" {
-  value = aws_instance.k8s_master.private_ip
+output "nat_private_ip" {
+  value = yandex_compute_instance.nat.network_interface.0.ip_address
 }
 
-output "k8s_worker_1_private_ip" {
-  value = aws_instance.k8s_worker_1.private_ip
+output "kmaster_public_ip" {
+  value = yandex_compute_instance.kmaster.network_interface.0.nat_ip_address
 }
 
-output "k8s_worker_2_private_ip" {
-  value = aws_instance.k8s_worker_2.private_ip
+output "kmaster_private_ip" {
+  value = yandex_compute_instance.kmaster.network_interface.0.ip_address
+}
+
+output "kworkers_private_ips" {
+  value = yandex_compute_instance.kworker[*].network_interface.0.ip_address
 }

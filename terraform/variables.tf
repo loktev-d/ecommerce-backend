@@ -1,23 +1,23 @@
-variable "aws_region" {
-  default = "eu-central-1"
+variable "region" {
+  default = "ru-central1"
 }
 
 variable "availability_zone" {
-  default = "eu-central-1a"
+  default = "ru-central1-a"
 }
 
 variable "main_cidr_block" {
   default = "10.0.0.0/16"
 }
 
-variable "instance_type" {
-  default = "t2.micro"
+variable "image_id" {
+  default = "fd86t95gnivk955ulbq8"
 }
 
-variable "key_name" {
-  default = "aws_kp"
+variable "platform_id" {
+  default = "standard-v1"
 }
 
-variable "ami_name" {
-  default = "ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"
+variable "preemptible" {
+  default = true
 }

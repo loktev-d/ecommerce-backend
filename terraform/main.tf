@@ -1,236 +1,131 @@
-data "aws_ami" "ubuntu" {
-  most_recent = true
-  owners      = ["099720109477"] # Canonical
+provider "yandex" {
+  zone = var.availability_zone
+}
 
-  filter {
-    name   = "name"
-    values = [var.ami_name]
-  }
+resource "yandex_vpc_network" "main" {
+  name = "main-vpc"
+}
 
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
+resource "yandex_vpc_subnet" "public" {
+  name = "public-subnet"
 
-  filter {
-    name   = "root-device-type"
-    values = ["ebs"]
-  }
+  network_id     = yandex_vpc_network.main.id
+  zone           = var.availability_zone
+  v4_cidr_blocks = [cidrsubnet(var.main_cidr_block, 8, 1)]
+}
 
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
+resource "yandex_vpc_subnet" "private" {
+  name = "private-subnet"
+
+  network_id     = yandex_vpc_network.main.id
+  zone           = var.availability_zone
+  v4_cidr_blocks = [cidrsubnet(var.main_cidr_block, 8, 2)]
+  route_table_id = yandex_vpc_route_table.private.id
+}
+
+resource "yandex_vpc_route_table" "private" {
+  name = "private-subnet-rt"
+
+  network_id = yandex_vpc_network.main.id
+
+  static_route {
+    destination_prefix = "0.0.0.0/16"
+    next_hop_address   = yandex_compute_instance.nat.network_interface.0.ip_address
   }
 }
 
-resource "aws_s3_bucket" "main" {
-  bucket = "ecommerce_backend"
+resource "yandex_compute_instance" "nat" {
+  name        = "nat"
+  platform_id = var.platform_id
+  zone        = var.availability_zone
 
-  tags = {
-    Name = "ecommerce_backend"
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-resource "aws_vpc" "main" {
-  cidr_block = var.main_cidr_block
-
-  tags = {
-    Name = "main"
-  }
-}
-
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
-
-  tags = {
-    Name = "main"
-  }
-}
-
-resource "aws_subnet" "public" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, 1)
-  availability_zone = var.availability_zone
-
-  tags = {
-    Name = "public"
-  }
-}
-
-resource "aws_subnet" "private" {
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = cidrsubnet(aws_vpc.main.cidr_block, 8, 2)
-  availability_zone = var.availability_zone
-
-  tags = {
-    Name = "private"
-  }
-}
-
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
+  resources {
+    cores  = 2
+    memory = 2
   }
 
-  tags = {
-    Name = "public"
+  boot_disk {
+    initialize_params {
+      image_id = "fd85vbr6kin3r8ro2e95" # NAT instance
+      size     = 8
+      type     = "network-hdd"
+    }
   }
-}
-
-resource "aws_route_table_association" "public" {
-  subnet_id      = aws_subnet.public.id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_security_group" "http_https_ssh_public" {
-  name   = "http_https_ssh_public"
-  vpc_id = aws_vpc.main.id
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "http_https_ssh_public"
-  }
-}
-
-resource "aws_security_group" "http_https_ssh_private" {
-  name   = "http_https_ssh_private"
-  vpc_id = aws_vpc.main.id
-
-  ingress {
-    description = "HTTPS"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.id]
-  }
-
-  ingress {
-    description = "HTTP"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.id]
-  }
-
-  ingress {
-    description = "SSH"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [aws_vpc.main.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "http_https_ssh_private"
-  }
-}
-
-resource "aws_network_interface" "k8s_master" {
-  subnet_id       = aws_subnet.public.id
-  private_ips     = [cidrhost(aws_subnet.public.cidr_block, 1)]
-  security_groups = [aws_security_group.http_https_ssh_public.id]
-}
-
-resource "aws_instance" "k8s_master" {
-  ami               = data.aws_ami.ubuntu.id
-  instance_type     = var.instance_type
-  availability_zone = var.availability_zone
-  key_name          = var.key_name
 
   network_interface {
-    device_index         = 0
-    network_interface_id = aws_network_interface.k8s_master.id
+    subnet_id = yandex_vpc_subnet.public.id
+    nat       = true
   }
 
-  tags = {
-    Name = "k8s_master"
+  scheduling_policy {
+    preemptible = var.preemptible
+  }
+
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
   }
 }
 
-resource "aws_network_interface" "k8s_worker_1" {
-  subnet_id       = aws_subnet.private.id
-  private_ips     = [cidrhost(aws_subnet.private.cidr_block, 1)]
-  security_groups = [aws_security_group.http_https_ssh_private.id]
-}
+resource "yandex_compute_instance" "kmaster" {
+  name        = "kmaster"
+  platform_id = var.platform_id
+  zone        = var.availability_zone
 
-resource "aws_instance" "k8s_worker_1" {
-  ami               = data.aws_ami.ubuntu.id
-  instance_type     = var.instance_type
-  availability_zone = var.availability_zone
-  key_name          = var.key_name
+  resources {
+    cores  = 2
+    memory = 4
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = var.image_id
+      size     = 8
+      type     = "network-hdd"
+    }
+  }
 
   network_interface {
-    device_index         = 0
-    network_interface_id = aws_network_interface.k8s_worker_1.id
+    subnet_id = yandex_vpc_subnet.private.id
   }
 
-  tags = {
-    Name = "k8s_worker_1"
+  scheduling_policy {
+    preemptible = var.preemptible
+  }
+
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
   }
 }
 
-resource "aws_network_interface" "k8s_worker_2" {
-  subnet_id       = aws_subnet.private.id
-  private_ips     = [cidrhost(aws_subnet.private.cidr_block, 2)]
-  security_groups = [aws_security_group.http_https_ssh_private.id]
-}
+resource "yandex_compute_instance" "kworker" {
+  count = 2
 
-resource "aws_instance" "k8s_worker_2" {
-  ami               = data.aws_ami.ubuntu.id
-  instance_type     = var.instance_type
-  availability_zone = var.availability_zone
-  key_name          = var.key_name
+  name        = "kworker-${count.index}"
+  platform_id = var.platform_id
+  zone        = var.availability_zone
+
+  resources {
+    cores  = 2
+    memory = 4
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = var.image_id
+      size     = 8
+      type     = "network-hdd"
+    }
+  }
 
   network_interface {
-    device_index         = 0
-    network_interface_id = aws_network_interface.k8s_worker_2.id
+    subnet_id = yandex_vpc_subnet.private.id
   }
 
-  tags = {
-    Name = "k8s_worker_2"
+  scheduling_policy {
+    preemptible = var.preemptible
+  }
+
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
   }
 }
