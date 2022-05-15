@@ -1,0 +1,30 @@
+- name: Bootstrap Kubernetes master
+  hosts: master
+  become: true
+  roles:
+    - k8s_dependencies
+
+  tasks:
+    - name: Initialize cluster
+      ansible.builtin.shell: kubeadm init --pod-network-cidr=10.244.0.0/16 >> cluster_initialized
+      args:
+        chdir: $HOME
+        creates: cluster_initialized
+
+    - name: Create .kube directory
+      ansible.builtin.file:
+        path: $HOME/.kube
+        state: directory
+
+    - name: Copy Kubernetes config
+      ansible.builtin.copy:
+        src: /etc/kubernetes/admin.conf
+        dest: $HOME/.kube/config
+        owner: $(id -u)
+        group: $(id -g)
+
+    - name: Install Flannel
+      ansible.builtin.shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup
+      args:
+        chdir: $HOME
+        creates: pod_network_setup
