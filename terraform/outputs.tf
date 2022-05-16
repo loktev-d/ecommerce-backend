@@ -6,10 +6,6 @@ output "nat_private_ip" {
   value = yandex_compute_instance.nat.network_interface.0.ip_address
 }
 
-output "kmaster_public_ip" {
-  value = yandex_compute_instance.kmaster.network_interface.0.nat_ip_address
-}
-
 output "kmaster_private_ip" {
   value = yandex_compute_instance.kmaster.network_interface.0.ip_address
 }

@@ -36,6 +36,7 @@ resource "yandex_vpc_route_table" "private" {
 
 resource "yandex_compute_instance" "nat" {
   name        = "nat"
+  hostname    = "nat"
   platform_id = var.platform_id
   zone        = var.availability_zone
 
@@ -53,8 +54,9 @@ resource "yandex_compute_instance" "nat" {
   }
 
   network_interface {
-    subnet_id = yandex_vpc_subnet.public.id
-    nat       = true
+    subnet_id  = yandex_vpc_subnet.public.id
+    nat        = true
+    ip_address = cidrhost(one(yandex_vpc_subnet.public.v4_cidr_blocks), 3)
   }
 
   scheduling_policy {
@@ -68,6 +70,7 @@ resource "yandex_compute_instance" "nat" {
 
 resource "yandex_compute_instance" "kmaster" {
   name        = "kmaster"
+  hostname    = "kmastet"
   platform_id = var.platform_id
   zone        = var.availability_zone
 
@@ -85,7 +88,8 @@ resource "yandex_compute_instance" "kmaster" {
   }
 
   network_interface {
-    subnet_id = yandex_vpc_subnet.private.id
+    subnet_id  = yandex_vpc_subnet.private.id
+    ip_address = cidrhost(one(yandex_vpc_subnet.private.v4_cidr_blocks), 3)
   }
 
   scheduling_policy {
@@ -101,6 +105,7 @@ resource "yandex_compute_instance" "kworker" {
   count = 2
 
   name        = "kworker-${count.index}"
+  hostname    = "kworker-${count.index}"
   platform_id = var.platform_id
   zone        = var.availability_zone
 
@@ -118,7 +123,8 @@ resource "yandex_compute_instance" "kworker" {
   }
 
   network_interface {
-    subnet_id = yandex_vpc_subnet.private.id
+    subnet_id  = yandex_vpc_subnet.private.id
+    ip_address = cidrhost(one(yandex_vpc_subnet.private.v4_cidr_blocks), count.index + 4)
   }
 
   scheduling_policy {
