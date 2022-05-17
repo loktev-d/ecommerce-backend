@@ -29,7 +29,7 @@ resource "yandex_vpc_route_table" "private" {
   network_id = yandex_vpc_network.main.id
 
   static_route {
-    destination_prefix = "0.0.0.0/16"
+    destination_prefix = "0.0.0.0/0"
     next_hop_address   = yandex_compute_instance.nat.network_interface.0.ip_address
   }
 }
@@ -70,7 +70,7 @@ resource "yandex_compute_instance" "nat" {
 
 resource "yandex_compute_instance" "kmaster" {
   name        = "kmaster"
-  hostname    = "kmastet"
+  hostname    = "kmaster"
   platform_id = var.platform_id
   zone        = var.availability_zone
 
