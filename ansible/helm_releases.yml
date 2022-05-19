@@ -1,0 +1,11 @@
+- name: Install Helm Charts
+  hosts: master
+
+  tasks:
+    - name: Install Jenkins Chart
+      kubernetes.core.helm:
+        release_name: jenkins
+        release_namespace: default
+        chart_ref: jenkins
+        chart_repo_url: https://charts.jenkins.io
+        

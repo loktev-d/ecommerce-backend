@@ -34,6 +34,17 @@
   args:
     creates: /etc/apt/sources.list.d/docker.list
 
+- name: Add Helm apt key
+  ansible.builtin.apt_key:
+    url: https://baltocdn.com/helm/signing.asc
+    state: present
+
+- name: Add Helm apt repo
+  ansible.builtin.apt_repository:
+    repo: deb https://baltocdn.com/helm/stable/debian/ all main
+    state: present
+    filename: helm-stable-debian
+
 - name: Install Kubernetes dependencies
   ansible.builtin.package:
     name:
@@ -56,11 +67,19 @@
   ansible.builtin.file:
     path: /etc/containerd/config.toml
     state: absent
+  register: containerd_config
 
 - name: Restart containerd service
   ansible.builtin.systemd:
     name: containerd
     state: restarted
+  when: containerd_config.changed
+
+- name: Install Helm
+  ansible.builtin.package:
+    name:
+      - helm
+    state: present
 
 - name: Prevent kubeadm from being upgraded
   dpkg_selections:
