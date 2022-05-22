@@ -101,8 +101,53 @@ resource "yandex_compute_instance" "kmaster" {
   }
 }
 
+resource "yandex_compute_disk" "hdd_20gb" {
+  name = "hdd-20gb"
+  type = "network-hdd"
+  zone = var.availability_zone
+  size = 30
+}
+
+resource "yandex_compute_instance" "kworker_storage" {
+  name        = "kworker-storage"
+  hostname    = "kworker-storage"
+  platform_id = var.platform_id
+  zone        = var.availability_zone
+
+  resources {
+    cores  = 4
+    memory = 8
+  }
+
+  boot_disk {
+    initialize_params {
+      image_id = var.image_id
+      size     = 15
+      type     = "network-hdd"
+    }
+  }
+
+  secondary_disk {
+    disk_id     = yandex_compute_disk.hdd_20gb.id
+    auto_delete = var.preemptible
+  }
+
+  network_interface {
+    subnet_id  = yandex_vpc_subnet.private.id
+    ip_address = cidrhost(one(yandex_vpc_subnet.private.v4_cidr_blocks), 4)
+  }
+
+  scheduling_policy {
+    preemptible = var.preemptible
+  }
+
+  metadata = {
+    ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
+  }
+}
+
 resource "yandex_compute_instance" "kworker" {
-  count = 2
+  count = 4
 
   name        = "kworker-${count.index}"
   hostname    = "kworker-${count.index}"
@@ -110,21 +155,21 @@ resource "yandex_compute_instance" "kworker" {
   zone        = var.availability_zone
 
   resources {
-    cores  = 2
-    memory = 4
+    cores  = 4
+    memory = 8
   }
 
   boot_disk {
     initialize_params {
       image_id = var.image_id
-      size     = 8
+      size     = 15
       type     = "network-hdd"
     }
   }
 
   network_interface {
     subnet_id  = yandex_vpc_subnet.private.id
-    ip_address = cidrhost(one(yandex_vpc_subnet.private.v4_cidr_blocks), count.index + 4)
+    ip_address = cidrhost(one(yandex_vpc_subnet.private.v4_cidr_blocks), count.index + 5)
   }
 
   scheduling_policy {
