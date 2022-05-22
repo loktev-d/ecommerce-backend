@@ -2,10 +2,26 @@
   hosts: master
 
   tasks:
+    - name: Install Rook-ceph Operator Chart
+      kubernetes.core.helm:
+        release_name: rook-ceph
+        release_namespace: rook-ceph
+        create_namespace: true
+        chart_ref: rook-ceph
+        chart_repo_url: https://charts.rook.io/release
+
+    - name: Install Rook-ceph Cluster Chart
+      kubernetes.core.helm:
+        release_name: rook-ceph-cluster
+        release_namespace: rook-ceph
+        create_namespace: true
+        chart_ref: rook-ceph-cluster
+        chart_repo_url: https://charts.rook.io/release
+        values: "{{ lookup('template', '../helm-values/rook-ceph-cluster.yml') | from_yaml }}"
+
     - name: Install Jenkins Chart
       kubernetes.core.helm:
         release_name: jenkins
         release_namespace: default
         chart_ref: jenkins
         chart_repo_url: https://charts.jenkins.io
-        

@@ -31,3 +31,11 @@
         chdir: $HOME
         creates: .pod_network_setup
       become: false
+
+    - name: Apply Kubernetes configs
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
+        state: present
+      become: false
+      with_fileglob: 
+        - "../kubernetes/*.yml"
