@@ -25,3 +25,4 @@
         release_namespace: default
         chart_ref: jenkins
         chart_repo_url: https://charts.jenkins.io
+        values: "{{ lookup('template', '../helm-values/jenkins.yml') | from_yaml }}"
