@@ -180,3 +180,21 @@ resource "yandex_compute_instance" "kworker" {
     ssh-keys = "ubuntu:${file("~/.ssh/id_rsa.pub")}"
   }
 }
+
+resource "yandex_dns_zone" "corp" {
+  name = "corp-zone"
+
+  zone             = "corp."
+  public           = false
+  private_networks = [yandex_vpc_network.main.id]
+}
+
+resource "yandex_dns_recordset" "main" {
+  for_each = toset(["docker-registry", "jenkins"])
+
+  zone_id = yandex_dns_zone.corp.id
+  name    = each.key
+  type    = "A"
+  ttl     = 600
+  data    = concat(yandex_compute_instance.kworker[*].network_interface.0.ip_address, [yandex_compute_instance.kworker_storage.network_interface.0.ip_address])
+}
