@@ -1,4 +1,6 @@
 controller:
+  tag: alpine
+  tagLabel: alpine
   installPlugins:
     - kubernetes
     - workflow-aggregator
@@ -19,8 +21,31 @@ controller:
                   properties:
                     - installSource:
                         installers:
-                          - terraformInstaller:
-                              id: "20413-linux-amd64"
+                          - command:
+                              command: |-
+                                wget https://hashicorp-releases.website.yandexcloud.net/terraform/1.1.9/terraform_1.1.9_linux_amd64.zip
+                                unzip terraform_0.12.21_linux_amd64.zip
+                                mv terraform /usr/bin/terraform
+                                echo 'provider_installation {
+                                  network_mirror {
+                                      url = "https://terraform-mirror.yandexcloud.net/"
+                                      include = ["registry.terraform.io/*/*"]
+                                    }
+                                    direct {
+                                      exclude = ["registry.terraform.io/*/*"]
+                                    }
+                                  }
+                                ' >> ~/.terraformrc
+                              toolHome: /usr/bin/terraform
+            ansibleInstallation:
+              installations:
+                - name: "ansible"
+                  properties:
+                    - installSource:
+                        installers:
+                          - command:
+                              command: apk -U add ansible
+                              toolHome: /bin/ansible
         jobs:
           - script: >
               pipelineJob('main') {
@@ -38,6 +63,13 @@ controller:
                   }
                 }
               }
-
+  ingress:
+    enabled: true
+    apiVersion: networking.k8s.io/v1
+    ingressClassName: nginx
+    hostName: jenkins.corp
+agent:
+  image: docker-registry.corp/jenkins-agent
+  tag: latest
 persistence:
   size: "3Gi"

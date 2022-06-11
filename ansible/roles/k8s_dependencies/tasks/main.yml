@@ -75,6 +75,16 @@
     state: restarted
   when: containerd_config.changed
 
+- name: Create certs directory
+  ansible.builtin.file:
+    path: /etc/docker/certs.d/docker-registry.corp
+    state: directory
+
+- name: Copy docker registry certificate
+  ansible.builtin.copy:
+    src: ../../../certs/tls.crt
+    dest: /etc/docker/certs.d/docker-registry.corp
+
 - name: Install Helm
   ansible.builtin.package:
     name:

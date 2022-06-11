@@ -1,0 +1,12 @@
+image:
+  tag: 2.8.1
+persistence:
+  size: 4Gi
+ingress:
+  enabled: true
+  hosts:
+    - docker-registry.corp
+  tls:
+    - secretName: registry-cert-secret
+      hosts:
+        - docker-registry.corp

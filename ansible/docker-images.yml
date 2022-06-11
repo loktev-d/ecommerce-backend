@@ -1,0 +1,34 @@
+- name: Push Docker Images
+  hosts: master
+  become: true
+
+  tasks:
+    - name: Apply cert-manager templates
+      kubernetes.core.k8s:
+        template: "{{ item }}"
+        state: present
+      become: false
+      with_fileglob: 
+        - "../kubernetes/cert-manager/*.j2"
+
+    - name: Apply cert-manager CRDs
+      kubernetes.core.k8s:
+        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
+        state: present
+      become: false
+      with_fileglob: 
+        - "../kubernetes/cert-manager/*.yml"
+
+    - name: Copy dockerfile to remote host
+      ansible.builtin.copy:
+        src: ../dockerfiles
+        dest: "/home/{{ ansible_user }}"
+      
+    - name: Push Jenkins Agent image
+      community.docker.docker_image:
+          build:
+            path: "/home/{{ ansible_user }}/dockerfiles/jenkins-agent"
+          name: docker-registry.corp/jenkins-agent
+          tag: latest
+          push: yes
+          source: build

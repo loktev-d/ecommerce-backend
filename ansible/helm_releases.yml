@@ -2,6 +2,15 @@
   hosts: master
 
   tasks:
+    - name: Install NGINX Ingress Controller Chart
+      kubernetes.core.helm:
+        release_name: ingress-nginx
+        release_namespace: ingress-nginx
+        create_namespace: true
+        chart_ref: ingress-nginx
+        chart_repo_url: https://kubernetes.github.io/ingress-nginx
+        values: "{{ lookup('template', '../helm-values/ingress-nginx.yml') | from_yaml }}"
+
     - name: Install Rook-ceph Operator Chart
       kubernetes.core.helm:
         release_name: rook-ceph
@@ -19,6 +28,23 @@
         chart_repo_url: https://charts.rook.io/release
         values: "{{ lookup('template', '../helm-values/rook-ceph-cluster.yml') | from_yaml }}"
 
+    - name: Install cert-manager Chart
+      kubernetes.core.helm:
+        release_name: cert-manager
+        release_namespace: cert-manager
+        create_namespace: true
+        chart_ref: cert-manager
+        chart_repo_url: https://charts.jetstack.io
+        values: "{{ lookup('template', '../helm-values/cert-manager.yml') | from_yaml }}"
+
+    - name: Install Docker Registry Chart
+      kubernetes.core.helm:
+        release_name: docker-registry
+        release_namespace: default
+        chart_ref: docker-registry
+        chart_repo_url: https://helm.twun.io
+        values: "{{ lookup('template', '../helm-values/docker-registry.yml') | from_yaml }}"
+
     - name: Install Jenkins Chart
       kubernetes.core.helm:
         release_name: jenkins
@@ -26,3 +52,12 @@
         chart_ref: jenkins
         chart_repo_url: https://charts.jenkins.io
         values: "{{ lookup('template', '../helm-values/jenkins.yml') | from_yaml }}"
+
+    - name: Wait for NGINX Ingress Controller to be ready
+      ansible.builtin.shell: "kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=controller --timeout=-1s -n ingress-nginx"
+
+    - name: Wait for Rook-Ceph to be ready
+      ansible.builtin.shell: "kubectl wait --for=status=running pod -l 'app!=rook-ceph-osd-prepare' --timeout=-1s -n rook-ceph"
+
+    - name: Wait for Docker Registry to be ready
+      ansible.builtin.shell: "kubectl wait --for=condition=ready pod -l app=docker-registry --timeout=-1s"

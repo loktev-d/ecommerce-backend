@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: registry-cert
+  namespace: default
+spec:
+  secretName: registry-cert-secret
+  issuerRef:
+    kind: ClusterIssuer
+    name: ca-issuer
+  commonName: docker-registry.corp
+  dnsNames:
+  - docker-registry.corp

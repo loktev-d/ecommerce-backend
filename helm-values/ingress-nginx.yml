@@ -1,0 +1,7 @@
+controller:
+  tag: '2.2.2-alpine'
+  hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
+  kind: DaemonSet
+  config:
+    proxy-body-size: 2048m
