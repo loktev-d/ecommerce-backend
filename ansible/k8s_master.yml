@@ -1,8 +1,5 @@
-- name: Bootstrap Kubernetes master
+- name: Bootstrap Kubernetes cluster
   hosts: master
-  become: true
-  roles:
-    - k8s_dependencies
 
   tasks:
     - name: Initialize cluster
@@ -10,12 +7,12 @@
       args:
         chdir: "/home/{{ ansible_user }}"
         creates: .cluster_initialized
+      become: true
 
     - name: Create .kube directory
       ansible.builtin.file:
         path: $HOME/.kube
         state: directory
-      become: false
 
     - name: Copy Kubernetes config
       ansible.builtin.copy:
@@ -24,18 +21,10 @@
         remote_src: true
         owner: "{{ ansible_user }}"
         group: "{{ ansible_user }}"
+      become: true
 
     - name: Install Flannel
       ansible.builtin.shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> .pod_network_setup
       args:
         chdir: $HOME
         creates: .pod_network_setup
-      become: false
-
-    - name: Apply Kubernetes configs
-      kubernetes.core.k8s:
-        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
-        state: present
-      become: false
-      with_fileglob: 
-        - "../kubernetes/*.yml"

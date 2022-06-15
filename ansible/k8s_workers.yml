@@ -13,8 +13,6 @@
 - name: Bootstrap Kubernetes workers
   hosts: workers
   become: true
-  roles:
-    - k8s_dependencies
 
   tasks:
     - name: Join cluster

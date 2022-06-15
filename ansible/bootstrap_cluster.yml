@@ -1,4 +1,5 @@
+- import_playbook: k8s_prerequisites.yml
 - import_playbook: k8s_master.yml
 - import_playbook: k8s_workers.yml
 - import_playbook: helm_releases.yml
-- import_playbook: docker-images.yml
+- import_playbook: docker_images.yml

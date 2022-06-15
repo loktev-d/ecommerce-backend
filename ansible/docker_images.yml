@@ -3,22 +3,6 @@
   become: true
 
   tasks:
-    - name: Apply cert-manager templates
-      kubernetes.core.k8s:
-        template: "{{ item }}"
-        state: present
-      become: false
-      with_fileglob: 
-        - "../kubernetes/cert-manager/*.j2"
-
-    - name: Apply cert-manager CRDs
-      kubernetes.core.k8s:
-        definition: "{{ lookup('file', '{{ item }}') | from_yaml }}"
-        state: present
-      become: false
-      with_fileglob: 
-        - "../kubernetes/cert-manager/*.yml"
-
     - name: Copy dockerfile to remote host
       ansible.builtin.copy:
         src: ../dockerfiles
